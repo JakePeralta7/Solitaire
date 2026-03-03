@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="auto">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Solitaire</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Solitaire</h1>
+    <div class="header-controls">
+      <button id="btn-leaderboard" class="btn-secondary" aria-label="Open leaderboard">🏆 Leaderboard</button>
+      <button id="btn-theme" class="btn-icon" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- Controls bar -->
+    <div class="controls-bar">
+      <div class="draw-selector" id="draw-selector">
+        <button class="draw-btn active" data-draw="1">Draw 1</button>
+        <button class="draw-btn" data-draw="3">Draw 3</button>
+      </div>
+      <div class="game-stats">
+        <span class="stat-item"><span class="stat-label">Time</span> <span id="timer">0:00</span></span>
+        <span class="stat-item"><span class="stat-label">Moves</span> <span id="moves">0</span></span>
+      </div>
+      <button id="btn-new-game" class="btn-secondary">New Game</button>
+    </div>
+
+    <!-- Board -->
+    <div class="board" id="board">
+      <!-- Top row: stock, waste, spacer, 4 foundations -->
+      <div class="top-row">
+        <div class="pile stock-pile" id="stock-pile" title="Click to draw">
+          <div class="pile-placeholder">🂠</div>
+        </div>
+        <div class="pile waste-pile" id="waste-pile">
+          <div class="pile-placeholder">—</div>
+        </div>
+        <div class="pile-spacer"></div>
+        <div class="pile foundation-pile" id="foundation-0" data-foundation="0">
+          <div class="pile-placeholder">♠</div>
+        </div>
+        <div class="pile foundation-pile" id="foundation-1" data-foundation="1">
+          <div class="pile-placeholder">♥</div>
+        </div>
+        <div class="pile foundation-pile" id="foundation-2" data-foundation="2">
+          <div class="pile-placeholder">♦</div>
+        </div>
+        <div class="pile foundation-pile" id="foundation-3" data-foundation="3">
+          <div class="pile-placeholder">♣</div>
+        </div>
+      </div>
+
+      <!-- Tableau columns -->
+      <div class="tableau-row" id="tableau-row">
+        <div class="tableau-col" id="tableau-0" data-col="0"></div>
+        <div class="tableau-col" id="tableau-1" data-col="1"></div>
+        <div class="tableau-col" id="tableau-2" data-col="2"></div>
+        <div class="tableau-col" id="tableau-3" data-col="3"></div>
+        <div class="tableau-col" id="tableau-4" data-col="4"></div>
+        <div class="tableau-col" id="tableau-5" data-col="5"></div>
+        <div class="tableau-col" id="tableau-6" data-col="6"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ── Leaderboard Modal ──────────────────────────────────────────────────── -->
+  <div id="modal-leaderboard" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="lb-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="lb-title">🏆 Leaderboard</h2>
+        <button class="btn-icon modal-close" id="lb-close" aria-label="Close">✕</button>
+      </div>
+      <div class="draw-selector" id="lb-draw-selector">
+        <button class="draw-btn active" data-draw="1">Draw 1</button>
+        <button class="draw-btn" data-draw="3">Draw 3</button>
+      </div>
+      <div id="leaderboard-content" class="leaderboard-content">
+        <p class="loading">Loading…</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Score Submit Modal ─────────────────────────────────────────────────── -->
+  <div id="modal-score" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="score-title">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 id="score-title">🎉 You Won!</h2>
+      </div>
+      <p id="score-summary" class="score-summary"></p>
+      <form id="score-form">
+        <label for="player-name">Your name</label>
+        <input type="text" id="player-name" maxlength="64" placeholder="Enter your name" autocomplete="off" />
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary">Submit Score</button>
+          <button type="button" id="btn-skip-score" class="btn-secondary">Skip</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Shared backdrop -->
+  <div id="modal-backdrop" class="modal-backdrop hidden"></div>
+
+  <script src="game.js"></script>
+</body>
+</html>
