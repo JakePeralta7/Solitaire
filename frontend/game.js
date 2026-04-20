@@ -29,6 +29,7 @@ const elStockPile        = document.getElementById('stock-pile');
 const elWastePile        = document.getElementById('waste-pile');
 const elDrawSelector     = document.getElementById('draw-selector');
 const elBtnNewGame       = document.getElementById('btn-new-game');
+const elBtnUndo          = document.getElementById('btn-undo');
 const elBtnLeaderboard   = document.getElementById('btn-leaderboard');
 const elBtnTheme         = document.getElementById('btn-theme');
 const elModalLeaderboard = document.getElementById('modal-leaderboard');
@@ -107,12 +108,20 @@ function makeCard(card) {
   return el;
 }
 
+function getCardW() {
+  // Mirror CSS: clamp(40, min((100vw-72)/7, (100dvh-130)/6.8), 95)
+  const byWidth  = (window.innerWidth  - 72)  / 7;
+  const byHeight = (window.innerHeight - 130) / 6.8;
+  return Math.max(40, Math.min(95, Math.min(byWidth, byHeight)));
+}
+
 function cardOffsets() {
-  return window.innerWidth <= 540 ? { down: 12, up: 18 } : { down: 20, up: 28 };
+  const h = getCardW() * 100 / 72;
+  return { down: Math.round(h * 0.20), up: Math.round(h * 0.28) };
 }
 
 function cardHeight() {
-  return window.innerWidth <= 540 ? 60 : 100;
+  return Math.round(getCardW() * 100 / 72);
 }
 
 // ─── Render ────────────────────────────────────────────────────────────────────
@@ -144,7 +153,7 @@ function renderWaste() {
   const dm = state.gameState.drawMode;
   const displayCount = dm === 3 ? Math.min(3, waste.length) : 1;
   const startIdx     = waste.length - displayCount;
-  const fanPx        = window.innerWidth <= 540 ? 8 : 14;
+  const fanPx        = Math.round(getCardW() * 0.194);
 
   for (let i = startIdx; i < waste.length; i++) {
     const isTop = (i === waste.length - 1);
@@ -334,6 +343,16 @@ function applyResult(result) {
     state.won = true;
     stopTimer();
     openScoreModal();
+  }
+}
+
+async function handleUndo() {
+  if (state.won) return;
+  clearSel();
+  const r = await postAction({ type: 'undo' });
+  if (r) {
+    state.gameState = r.state;
+    renderBoard();
   }
 }
 
@@ -548,6 +567,7 @@ elTableauCols.forEach((colEl, col) => {
   colEl.addEventListener('click', () => handleTableauColClick(col));
 });
 
+elBtnUndo.addEventListener('click', handleUndo);
 elBtnLeaderboard.addEventListener('click', openLeaderboardModal);
 elLbClose.addEventListener('click', closeLeaderboardModal);
 
@@ -581,7 +601,16 @@ elModalBackdrop.addEventListener('click', () => {
   if (!elModalLeaderboard.classList.contains('hidden')) closeLeaderboardModal();
 });
 
+window.addEventListener('resize', () => {
+  if (state.gameState) renderBoard();
+});
+
 document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    e.preventDefault();
+    handleUndo();
+    return;
+  }
   if (e.key === 'Escape' && elModalLeaderboard.classList.contains('hidden') === false) {
     closeLeaderboardModal();
   }

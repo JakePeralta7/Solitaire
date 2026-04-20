@@ -68,6 +68,7 @@ function deal(drawMode) {
     drawMode,
     moves: 0,
     recycleCount: 0,
+    history: [],                // undo stack (snapshots without history key)
   };
 }
 

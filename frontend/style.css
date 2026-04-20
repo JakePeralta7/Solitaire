@@ -190,7 +190,7 @@ button:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
   flex-wrap: wrap;
   justify-content: center;
   width: 100%;
-  max-width: 760px;
+  max-width: 920px;
   background: rgba(0,0,0,.18);
   border-radius: var(--radius);
   padding: 8px 14px;
@@ -258,23 +258,18 @@ button:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
   flex-direction: column;
   gap: 8px;
   width: 100%;
-  max-width: 760px;
+  max-width: 920px;
   user-select: none;
 }
 
-/* ── Card dimensions (CSS custom property so all sizes stay in sync) ─────── */
+/* ── Card dimensions — scale continuously with viewport width ──────────────── */
 :root {
-  --card-w: 72px;
-  --card-h: 100px;
-  --card-r: 6px;
-}
-
-@media (max-width: 540px) {
-  :root {
-    --card-w: 42px;
-    --card-h: 60px;
-    --card-r: 4px;
-  }
+  /* 7 cards + 6 gaps×8px + 24px main padding = 72px overhead */
+  /* width-based: 7 cards + 6×8px gaps + 24px padding
+     height-based: top-row + tableau (≈6.8 card-heights) + header/controls ≈130px */
+  --card-w: clamp(40px, min(calc((100vw - 72px) / 7), calc((100dvh - 130px) / 6.8)), 95px);
+  --card-h: calc(var(--card-w) * 100 / 72);
+  --card-r: clamp(4px, calc(var(--card-w) * 0.067), 7px);
 }
 
 /* ── Top row ─────────────────────────────────────────────────────────────── */
@@ -304,14 +299,10 @@ button:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
 }
 
 .pile-placeholder {
-  font-size: 1.6rem;
+  font-size: clamp(0.9rem, calc(var(--card-w) * 0.30), 2.2rem);
   opacity: .45;
   pointer-events: none;
   line-height: 1;
-}
-
-@media (max-width: 540px) {
-  .pile-placeholder { font-size: 1rem; }
 }
 
 .stock-pile {
@@ -329,18 +320,14 @@ button:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 3px 4px;
+  padding: clamp(2px, calc(var(--card-w) * 0.042), 5px) clamp(2px, calc(var(--card-w) * 0.056), 7px);
   cursor: pointer;
   transition: box-shadow 0.12s;
-  font-size: 0.75rem;
+  font-size: clamp(0.55rem, calc(var(--card-w) * 0.125), 1rem);
   font-weight: 700;
   line-height: 1;
   flex-shrink: 0;
   position: relative;
-}
-
-@media (max-width: 540px) {
-  .card { font-size: 0.6rem; padding: 2px 3px; }
 }
 
 .card.face-down {
@@ -379,7 +366,7 @@ button:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  font-size: 0.78rem;
+  font-size: clamp(0.55rem, calc(var(--card-w) * 0.138), 1.1rem);
 }
 
 .rank-bottom {
@@ -387,24 +374,19 @@ button:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
   flex-direction: column;
   align-items: flex-end;
   transform: rotate(180deg);
-  font-size: 0.78rem;
+  font-size: clamp(0.55rem, calc(var(--card-w) * 0.138), 1.1rem);
 }
 
 .rank-label { font-weight: 800; line-height: 1; }
-.suit-label { font-size: 0.65rem; line-height: 1.2; }
+.suit-label { font-size: 0.83em; line-height: 1.2; }
 
 .suit-center {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  font-size: clamp(0.75rem, calc(var(--card-w) * 0.27), 2rem);
   pointer-events: none;
-}
-
-@media (max-width: 540px) {
-  .rank-top, .rank-bottom { font-size: 0.6rem; }
-  .suit-center { font-size: 0.85rem; }
 }
 
 /* ── Waste pile – cards stack slightly offset ────────────────────────────── */
@@ -418,13 +400,8 @@ button:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
   left: 0;
 }
 
-/* offsets for draw-3 fan */
-.waste-pile .card:nth-child(2) { left: 14px; }
-.waste-pile .card:nth-child(3) { left: 28px; }
-@media (max-width: 540px) {
-  .waste-pile .card:nth-child(2) { left: 8px; }
-  .waste-pile .card:nth-child(3) { left: 16px; }
-}
+.waste-pile .card:nth-child(2) { left: calc(var(--card-w) * 0.194); }
+.waste-pile .card:nth-child(3) { left: calc(var(--card-w) * 0.389); }
 
 /* ── Tableau columns ─────────────────────────────────────────────────────── */
 .tableau-row {

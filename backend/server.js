@@ -7,6 +7,21 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('./db');
 const { deal, drawStock, moveCards, isWon, clientState } = require('./game');
 
+// ─── Undo helper ───────────────────────────────────────────────────────────────
+
+/** Deep-copy the game state without the history array (for undo snapshots). */
+function snapshotState(state) {
+  const { history, ...rest } = state;
+  return JSON.parse(JSON.stringify(rest));
+}
+
+/** Push a snapshot onto the undo stack (max 52 entries). */
+function pushHistory(state) {
+  if (!state.history) state.history = [];
+  if (state.history.length >= 52) state.history.shift();
+  state.history.push(snapshotState(state));
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const VALID_DRAW_MODES = [1, 3];
@@ -95,6 +110,7 @@ app.post('/api/action', (req, res) => {
   const state = session.state;
 
   if (type === 'draw') {
+    pushHistory(state);
     drawStock(state);
     db.updateSession(session.session_id, state);
     const won = isWon(state);
@@ -105,12 +121,27 @@ app.post('/api/action', (req, res) => {
     const { from, to } = req.body;
     if (!from || !to) return res.status(400).json({ error: 'from and to are required for move' });
 
+    pushHistory(state);
     const result = moveCards(state, from, to);
-    if (!result.ok) return res.status(400).json({ error: result.error });
+    if (!result.ok) {
+      // Rollback the history push if move was invalid
+      state.history.pop();
+      return res.status(400).json({ error: result.error });
+    }
 
     db.updateSession(session.session_id, state);
     const won = isWon(state);
     return res.json({ state: clientState(state), won });
+  }
+
+  if (type === 'undo') {
+    if (!state.history || state.history.length === 0) {
+      return res.status(400).json({ error: 'Nothing to undo' });
+    }
+    const snapshot = state.history.pop();
+    const restored = { ...snapshot, history: state.history };
+    db.updateSession(session.session_id, restored);
+    return res.json({ state: clientState(restored), won: false });
   }
 
   return res.status(400).json({ error: `Unknown action type: ${type}` });
