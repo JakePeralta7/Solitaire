@@ -1,4 +1,3 @@
-// @ts-nocheck
 'use strict';
 
 // ─── Card helpers ──────────────────────────────────────────────────────────────
@@ -625,4 +624,3 @@ document.addEventListener('keydown', e => {
   const resumed = await tryResumeSession();
   if (!resumed) await startNewGame();
 })();
-
