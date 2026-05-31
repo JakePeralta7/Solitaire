@@ -1,4 +1,4 @@
-# ── Stage 1: deps (build native modules) ─────────────────────────────────────
+# -- Stage 1: deps (build native modules) -------------------------------------
 FROM node:22-alpine AS deps
 
 WORKDIR /build
@@ -7,11 +7,13 @@ WORKDIR /build
 RUN apk add --no-cache python3 make g++
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml ./
-WORKDIR /build/backend
-COPY backend/package.json ./
-RUN corepack enable && pnpm install --prod --frozen-lockfile
+COPY backend/package.json ./backend/package.json
+RUN corepack enable && pnpm install --frozen-lockfile --filter backend
 
-# ── Stage 2: runtime ──────────────────────────────────────────────────────────
+COPY backend/ ./backend/
+RUN pnpm --dir backend exec tsc -p tsconfig.json
+
+# -- Stage 2: runtime ----------------------------------------------------------
 FROM node:22-alpine
 
 # tini for proper PID 1 signal handling
@@ -19,9 +21,11 @@ RUN apk add --no-cache tini
 
 WORKDIR /app
 
-# Copy application source
-COPY backend/ ./backend/
+# Copy frontend source
 COPY frontend/ ./frontend/
+
+# Copy compiled backend output
+COPY --from=deps /build/backend/dist ./backend/dist
 
 # Copy pnpm virtual store used by backend/node_modules symlinks
 COPY --from=deps /build/node_modules ./node_modules
@@ -43,4 +47,5 @@ USER solitaire
 EXPOSE 3000
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "backend/server.js"]
+CMD ["node", "backend/dist/server.js"]
+
