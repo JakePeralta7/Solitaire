@@ -349,6 +349,10 @@ button:focus-visible { outline: 2px solid #fbbf24; outline-offset: 2px; }
   z-index: 10;
 }
 
+.hint-to {
+  box-shadow: 0 0 0 3px #22c55e, 0 2px 8px rgba(0,0,0,.3) !important;
+}
+
 /* Suit colours */
 .card.red .rank-top,
 .card.red .rank-bottom,

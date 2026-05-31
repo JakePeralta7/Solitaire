@@ -20,6 +20,9 @@ const state = {
   timerInterval: null,
   elapsedSeconds: 0,
   won: false,
+  hints: [],            // computed valid moves for hint cycling
+  hintIndex: -1,
+  hintTarget: null,     // { pile, col?, index? } — hint destination
 };
 
 // ─── DOM refs ──────────────────────────────────────────────────────────────────
@@ -185,6 +188,7 @@ function renderFoundations() {
       el.appendChild(cardEl);
     }
     el.classList.toggle('complete', pile.length === 13);
+    el.classList.toggle('hint-to', state.hintTarget?.pile === 'foundation' && state.hintTarget?.index === i);
   });
 }
 
@@ -196,6 +200,7 @@ function renderTableau() {
     const colEl = elTableauCols[col];
     colEl.innerHTML = '';
     colEl.classList.toggle('drop-target', column.length === 0);
+    colEl.classList.toggle('hint-to', state.hintTarget?.pile === 'tableau' && state.hintTarget?.col === col);
 
     if (column.length === 0) {
       colEl.style.minHeight = `${ch}px`;
@@ -227,10 +232,89 @@ function renderTableau() {
   });
 }
 
+// ─── Hint ─────────────────────────────────────────────────────────────────────
+
+function computeHints() {
+  const gs = state.gameState;
+  if (!gs) return [];
+  const hints = [];
+
+  function canGoToFoundation(card) {
+    for (let fi = 0; fi < 4; fi++) {
+      const pile = gs.foundations[fi];
+      if (pile.length === 0 && card.rank === 1) return fi;
+      if (pile.length > 0 && pile[pile.length - 1].suit === card.suit && pile[pile.length - 1].rank === card.rank - 1) return fi;
+    }
+    return -1;
+  }
+
+  function canGoOnTableau(card, col) {
+    const column = gs.tableau[col];
+    if (column.length === 0) return card.rank === 13;
+    const top = column[column.length - 1];
+    return top.faceUp && isRed(top.suit) !== isRed(card.suit) && top.rank === card.rank + 1;
+  }
+
+  // Waste top card moves
+  if (gs.waste.length > 0) {
+    const card = gs.waste[gs.waste.length - 1];
+    const fi = canGoToFoundation(card);
+    if (fi !== -1) hints.push({ from: { pile: 'waste' }, to: { pile: 'foundation', index: fi } });
+    for (let col = 0; col < 7; col++) {
+      if (canGoOnTableau(card, col)) hints.push({ from: { pile: 'waste' }, to: { pile: 'tableau', col } });
+    }
+  }
+
+  // Tableau moves
+  for (let col = 0; col < 7; col++) {
+    const column = gs.tableau[col];
+    const firstFaceUpIdx = column.findIndex(c => c.faceUp);
+    const hasHiddenCards = firstFaceUpIdx > 0;
+
+    for (let ci = 0; ci < column.length; ci++) {
+      const card = column[ci];
+      if (!card.faceUp) continue;
+
+      // Top card to foundation
+      if (ci === column.length - 1) {
+        const fi = canGoToFoundation(card);
+        if (fi !== -1) hints.push({ from: { pile: 'tableau', col, cardIndex: ci }, to: { pile: 'foundation', index: fi } });
+      }
+
+      // Sequence to another tableau column
+      const isBottomOfVisible = ci === firstFaceUpIdx;
+      for (let destCol = 0; destCol < 7; destCol++) {
+        if (destCol === col) continue;
+        if (canGoOnTableau(card, destCol)) {
+          const destEmpty = gs.tableau[destCol].length === 0;
+          // Skip moving whole visible stack to empty col when nothing is revealed
+          if (isBottomOfVisible && destEmpty && !hasHiddenCards) continue;
+          hints.push({ from: { pile: 'tableau', col, cardIndex: ci }, to: { pile: 'tableau', col: destCol } });
+        }
+      }
+    }
+  }
+
+  return hints;
+}
+
+function showNextHint() {
+  if (state.won || !state.gameState) return;
+  const hints = computeHints();
+  if (!hints.length) return;
+  state.hints = hints;
+  state.hintIndex = (state.hintIndex + 1) % hints.length;
+  const hint = hints[state.hintIndex];
+  state.selected = hint.from;
+  state.hintTarget = hint.to;
+  renderBoard();
+}
+
 // ─── Interaction handlers ──────────────────────────────────────────────────────
 
 function clearSel() {
   state.selected = null;
+  state.hintTarget = null;
 }
 
 function handleStockClick() {
@@ -340,6 +424,8 @@ function handleAutoFoundation(from) {
 
 function applyResult(result) {
   state.gameState = result.state;
+  state.hints = [];
+  state.hintIndex = -1;
   renderBoard();
   if (result.won) {
     state.won = true;
@@ -351,6 +437,8 @@ function applyResult(result) {
 async function handleUndo() {
   if (state.won) return;
   clearSel();
+  state.hints = [];
+  state.hintIndex = -1;
   const r = await postAction({ type: 'undo' });
   if (r) {
     state.gameState = r.state;
@@ -408,6 +496,8 @@ async function startNewGame() {
   state.won = false;
   state.elapsedSeconds = 0;
   state.gameState = null;
+  state.hints = [];
+  state.hintIndex = -1;
   renderTimer();
   elMoves.textContent = '0';
 
@@ -615,6 +705,13 @@ document.addEventListener('keydown', e => {
   }
   if (e.key === 'Escape' && elModalLeaderboard.classList.contains('hidden') === false) {
     closeLeaderboardModal();
+  }
+  if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    const tag = (document.activeElement?.tagName ?? '').toLowerCase();
+    if (tag !== 'input' && tag !== 'textarea') {
+      e.preventDefault();
+      showNextHint();
+    }
   }
 });
 
