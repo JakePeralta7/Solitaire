@@ -194,6 +194,7 @@ function renderTableau() {
   state.gameState.tableau.forEach((column, col) => {
     const colEl = elTableauCols[col];
     colEl.innerHTML = '';
+    colEl.classList.toggle('drop-target', column.length === 0);
 
     if (column.length === 0) {
       colEl.style.minHeight = `${ch}px`;
