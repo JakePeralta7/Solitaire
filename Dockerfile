@@ -19,15 +19,20 @@ RUN apk add --no-cache tini
 
 WORKDIR /app
 
-# Copy production node_modules from deps stage
-COPY --from=deps /build/backend/node_modules ./backend/node_modules
-
 # Copy application source
 COPY backend/ ./backend/
 COPY frontend/ ./frontend/
 
+# Copy pnpm virtual store used by backend/node_modules symlinks
+COPY --from=deps /build/node_modules ./node_modules
+
+# Copy production node_modules from deps stage
+COPY --from=deps /build/backend/node_modules ./backend/node_modules
+
 # Create data directory for SQLite volume mount
 RUN mkdir -p /data
+
+ENV DB_PATH=/data/solitaire.db
 
 # Non-root user
 RUN addgroup -S solitaire && adduser -S solitaire -G solitaire \
