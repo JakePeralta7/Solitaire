@@ -7,8 +7,9 @@ WORKDIR /build
 RUN apk add --no-cache python3 make g++
 
 COPY pnpm-workspace.yaml pnpm-lock.yaml ./
-COPY backend/package.json ./backend/package.json
-RUN corepack enable && pnpm install --prod --frozen-lockfile --filter backend
+WORKDIR /build/backend
+COPY backend/package.json ./
+RUN corepack enable && pnpm install --prod --frozen-lockfile
 
 # ── Stage 2: runtime ──────────────────────────────────────────────────────────
 FROM node:22-alpine
