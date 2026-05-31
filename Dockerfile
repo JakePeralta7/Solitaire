@@ -7,7 +7,7 @@ WORKDIR /build
 RUN apk add --no-cache python3 make g++
 
 COPY backend/package.json ./
-RUN npm install --omit=dev
+RUN corepack enable && pnpm install --prod
 
 # ── Stage 2: runtime ──────────────────────────────────────────────────────────
 FROM node:22-alpine
