@@ -6,8 +6,9 @@ WORKDIR /build
 # Required to compile better-sqlite3 native addon
 RUN apk add --no-cache python3 make g++
 
-COPY backend/package.json ./
-RUN corepack enable && pnpm install --prod
+COPY pnpm-workspace.yaml pnpm-lock.yaml ./
+COPY backend/package.json ./backend/package.json
+RUN corepack enable && pnpm install --prod --frozen-lockfile --filter backend
 
 # ── Stage 2: runtime ──────────────────────────────────────────────────────────
 FROM node:22-alpine
@@ -18,7 +19,7 @@ RUN apk add --no-cache tini
 WORKDIR /app
 
 # Copy production node_modules from deps stage
-COPY --from=deps /build/node_modules ./backend/node_modules
+COPY --from=deps /build/backend/node_modules ./backend/node_modules
 
 # Copy application source
 COPY backend/ ./backend/
