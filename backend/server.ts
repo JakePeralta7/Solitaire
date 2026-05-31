@@ -27,7 +27,7 @@ const PORT = process.env.PORT || 3000;
 const VALID_DRAW_MODES = [1, 3];
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '..', 'frontend')));
+app.use(express.static(path.join(__dirname, '..', '..', 'frontend')));
 
 // ─── Validation helpers ────────────────────────────────────────────────────────
 
