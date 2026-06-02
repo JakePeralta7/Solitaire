@@ -11,7 +11,8 @@ COPY backend/package.json ./backend/package.json
 RUN corepack enable && pnpm install --frozen-lockfile --filter backend
 
 COPY backend/ ./backend/
-RUN pnpm --dir backend exec tsc -p tsconfig.json
+COPY frontend/ ./frontend/
+RUN pnpm --dir backend run build
 
 # -- Stage 2: runtime ----------------------------------------------------------
 FROM node:22-alpine
@@ -21,8 +22,8 @@ RUN apk add --no-cache tini
 
 WORKDIR /app
 
-# Copy frontend source
-COPY frontend/ ./frontend/
+# Copy frontend output (includes generated game.js from game.ts)
+COPY --from=deps /build/frontend/ ./frontend/
 
 # Copy compiled backend output
 COPY --from=deps /build/backend/dist ./backend/dist

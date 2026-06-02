@@ -239,10 +239,11 @@ function computeHints() {
   if (!gs) return [];
   const hints = [];
 
+  const FOUNDATION_SUITS = ['S', 'H', 'D', 'C'];
   function canGoToFoundation(card) {
     for (let fi = 0; fi < 4; fi++) {
       const pile = gs.foundations[fi];
-      if (pile.length === 0 && card.rank === 1) return fi;
+      if (pile.length === 0 && card.rank === 1 && card.suit === FOUNDATION_SUITS[fi]) return fi;
       if (pile.length > 0 && pile[pile.length - 1].suit === card.suit && pile[pile.length - 1].rank === card.rank - 1) return fi;
     }
     return -1;
@@ -350,12 +351,13 @@ function handleFoundationClick(foundIdx) {
 
   const sel = state.selected;
   clearSel();
+  renderBoard();
   startTimer();
 
   let from;
   if (sel.pile === 'waste')      from = { pile: 'waste' };
   else if (sel.pile === 'tableau') from = { pile: 'tableau', col: sel.col, cardIndex: sel.cardIndex };
-  else { renderBoard(); return; }
+  else { return; }
 
   postAction({ type: 'move', from, to: { pile: 'foundation', index: foundIdx } })
     .then(r => { if (r) applyResult(r); else renderBoard(); });
@@ -372,13 +374,14 @@ function handleTableauCardClick(col, cardIndex) {
   if (state.selected) {
     const sel = state.selected;
     clearSel();
+    renderBoard();
     startTimer();
 
     let from;
     if (sel.pile === 'waste')        from = { pile: 'waste' };
     else if (sel.pile === 'tableau') from = { pile: 'tableau', col: sel.col, cardIndex: sel.cardIndex };
     else if (sel.pile === 'foundation') from = { pile: 'foundation', index: sel.index };
-    else { renderBoard(); return; }
+    else { return; }
 
     postAction({ type: 'move', from, to: { pile: 'tableau', col } })
       .then(r => {
@@ -401,13 +404,14 @@ function handleTableauColClick(col) {
 
   const sel = state.selected;
   clearSel();
+  renderBoard();
   startTimer();
 
   let from;
   if (sel.pile === 'waste')        from = { pile: 'waste' };
   else if (sel.pile === 'tableau') from = { pile: 'tableau', col: sel.col, cardIndex: sel.cardIndex };
   else if (sel.pile === 'foundation') from = { pile: 'foundation', index: sel.index };
-  else { renderBoard(); return; }
+  else { return; }
 
   postAction({ type: 'move', from, to: { pile: 'tableau', col } })
     .then(r => { if (r) applyResult(r); else renderBoard(); });
@@ -426,6 +430,8 @@ function applyResult(result) {
   state.gameState = result.state;
   state.hints = [];
   state.hintIndex = -1;
+  state.selected = null;
+  state.hintTarget = null;
   renderBoard();
   if (result.won) {
     state.won = true;

@@ -113,9 +113,10 @@ function isValidTableauMove(card, targetCard) {
 /**
  * True when `card` can legally be placed on the given foundation pile.
  * Rule: same suit, ascending rank, starting with Ace.
+ * Each foundation slot is tied to a specific suit (SUITS[foundIdx]).
  */
-function isValidFoundationMove(card, foundationCards) {
-  if (foundationCards.length === 0) return card.rank === 1; // Ace starts a pile
+function isValidFoundationMove(card, foundationCards, foundIdx) {
+  if (foundationCards.length === 0) return card.rank === 1 && card.suit === SUITS[foundIdx];
   const top = foundationCards[foundationCards.length - 1];
   return card.suit === top.suit && card.rank === top.rank + 1;
 }
@@ -179,10 +180,10 @@ function moveCards(state, from, to) {
     let foundIdx = to.index;
     if (foundIdx == null) {
       // Try to find the matching foundation pile
-      foundIdx = state.foundations.findIndex(f => isValidFoundationMove(card, f));
+      foundIdx = state.foundations.findIndex((f, i) => isValidFoundationMove(card, f, i));
       if (foundIdx === -1) return { ok: false, error: 'No valid foundation for this card' };
     } else {
-      if (!isValidFoundationMove(card, state.foundations[foundIdx])) {
+      if (!isValidFoundationMove(card, state.foundations[foundIdx], foundIdx)) {
         return { ok: false, error: 'Invalid foundation move' };
       }
     }

@@ -28,6 +28,9 @@ dist/
 build/
 .cache/
 .temp/
+
+# Compiled frontend (generated from game.ts)
+frontend/game.js
 .tmp/
 
 # Editor and OS files

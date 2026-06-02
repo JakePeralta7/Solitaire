@@ -5,7 +5,7 @@
     "scripts":  {
                     "start":  "node dist/server.js",
                     "dev":  "tsc -w -p tsconfig.json",
-                    "build":  "tsc -p tsconfig.json \u0026\u0026 tsc --noEmit -p ../frontend/tsconfig.json",
+                    "build":  "tsc -p tsconfig.json \u0026\u0026 tsc -p ../frontend/tsconfig.json",
                     "typecheck":  "tsc --noEmit -p tsconfig.json \u0026\u0026 tsc --noEmit -p ../frontend/tsconfig.json",
                     "test":  "pnpm run build \u0026\u0026 node --test dist/test/**/*.test.js"
                 },
